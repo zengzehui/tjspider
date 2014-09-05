@@ -54,7 +54,7 @@ public class PageController {
 	}
 	
 	@RequestMapping(value = "/gb2312", method = RequestMethod.GET)
-	public @ResponseBody String getPageGBK(@RequestParam("url") String url, HttpServletResponse response)
+	public @ResponseBody String getPageGBK1(@RequestParam("url") String url, HttpServletResponse response)
 			throws IOException {
 		logger.info("------------------------------");
 		logger.info("url = " + url);
@@ -101,6 +101,22 @@ public class PageController {
 		logger.info("url = " + url);
 		
 		Document doc = Jsoup.parse(new URL(url).openStream(), "gb2312", url);
+		
+		
+		response.setContentType("text/html; charset=utf-8");
+		response.getWriter().write(doc.html());
+		response.getWriter().close();
+		return null;
+	}
+	
+	@RequestMapping(value = "/gbk", method = RequestMethod.GET)
+	public @ResponseBody String getPageGBK(@RequestParam("url") String url, HttpServletResponse response)
+			throws IOException {
+		logger.info("------------------------------");
+		logger.info("url = " + url);
+		
+		Document doc = Jsoup.parse(new URL(url).openStream(), "gbk", url);
+		
 		
 		response.setContentType("text/html; charset=utf-8");
 		response.getWriter().write(doc.html());
