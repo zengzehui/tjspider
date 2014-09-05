@@ -59,6 +59,8 @@ public class PageController {
 		logger.info("------------------------------");
 		logger.info("url = " + url);
 		Document doc = Jsoup.parse(new URL(url), 60*1000);
+		logger.info("111111111111111111111111111\n" + doc.html());
+		logger.info("222222222222222222222222222\n" + new String(doc.html().getBytes("gb2312"), "utf-8"));
 		
 		response.setContentType("text/html; charset=utf-8");
 		response.getWriter().write(new String(doc.html().getBytes("gb2312"), "utf-8"));
