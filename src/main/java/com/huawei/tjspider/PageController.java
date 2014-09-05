@@ -52,4 +52,17 @@ public class PageController {
 		response.getWriter().close();
 		return null;
 	}
+	
+	@RequestMapping(value = "/gb2312", method = RequestMethod.GET)
+	public @ResponseBody String getPageGBK(@RequestParam("url") String url, HttpServletResponse response)
+			throws IOException {
+		logger.info("------------------------------");
+		logger.info("url = " + url);
+		Document doc = Jsoup.parse(new URL(url), 60*1000);
+		
+		response.setContentType("text/html; charset=utf-8");
+		response.getWriter().write(new String(doc.html().getBytes("gb2312"), "utf-8"));
+		response.getWriter().close();
+		return null;
+	}
 }
