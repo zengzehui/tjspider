@@ -56,14 +56,8 @@ public class PageController {
 		logger.info("finalCharset = " + finalCharset);
 
 		String utf8Html = new String(srcHtml.getBytes(finalCharset), "UTF-8");
-
-		response.setCharacterEncoding("UTF-8");
-		if (srcContentType != null && !"".equalsIgnoreCase(srcContentType)) {
-			response.setContentType(srcContentType);
-		} else {
-			response.setContentType("text/html");
-		}
 		
+		response.setContentType("text/html; charset=UTF-8");
 		response.getWriter().write(utf8Html);
 		response.getWriter().close();
 		return null;
