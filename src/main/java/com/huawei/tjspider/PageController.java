@@ -67,4 +67,30 @@ public class PageController {
 		response.getWriter().close();
 		return null;
 	}
+	
+	@RequestMapping(value = "/gb23122", method = RequestMethod.GET)
+	public @ResponseBody String getPageGBK2(@RequestParam("url") String url, HttpServletResponse response)
+			throws IOException {
+		logger.info("------------------------------");
+		logger.info("url = " + url);
+		Response jsoupResponse = Jsoup.connect(url).timeout(60 * 1000).execute();
+		String srcCharset = jsoupResponse.charset();
+		String srcContentType = jsoupResponse.contentType();
+		int srcStatusCode = jsoupResponse.statusCode();
+		String srcStatusMessage = jsoupResponse.statusMessage();
+
+		logger.info("srcCharset = " + srcCharset);
+		logger.info("srcContentType = " + srcContentType);
+		logger.info("srcStatusCode = " + srcStatusCode);
+		logger.info("srcStatusMessage = " + srcStatusMessage);
+
+		String srcHtml = jsoupResponse.body();
+		logger.info("111111111111111111111111111\n" + srcHtml);
+		logger.info("222222222222222222222222222\n" + new String(srcHtml.getBytes("gb2312"), "utf-8"));
+		
+		response.setContentType("text/html; charset=utf-8");
+		response.getWriter().write(new String(srcHtml.getBytes("gb2312"), "utf-8"));
+		response.getWriter().close();
+		return null;
+	}
 }
