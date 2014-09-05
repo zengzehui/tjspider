@@ -23,9 +23,9 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 @Controller
 @RequestMapping(value = "/html")
-public class PageController {
+public class HtmlController {
 
-	private static final Logger logger = LoggerFactory.getLogger(PageController.class);
+	private static final Logger logger = LoggerFactory.getLogger(HtmlController.class);
 
 	@RequestMapping(value = "/{charset}", method = RequestMethod.GET)
 	public @ResponseBody String getPageUTF8(@PathVariable String charset, @RequestParam("url") String url,
