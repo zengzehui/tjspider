@@ -93,4 +93,18 @@ public class PageController {
 		response.getWriter().close();
 		return null;
 	}
+	
+	@RequestMapping(value = "/gb23123", method = RequestMethod.GET)
+	public @ResponseBody String getPageGBK3(@RequestParam("url") String url, HttpServletResponse response)
+			throws IOException {
+		logger.info("------------------------------");
+		logger.info("url = " + url);
+		
+		Document doc = Jsoup.parse(new URL(url).openStream(), "gb2312", url);
+		
+		response.setContentType("text/html; charset=utf-8");
+		response.getWriter().write(doc.html());
+		response.getWriter().close();
+		return null;
+	}
 }
