@@ -30,6 +30,7 @@ public class TestController {
 		String formattedDate = dateFormat.format(date);
 		
 		model.addAttribute("serverTime", formattedDate );
+		// aaaaa
 		
 		return "home";
 	}
