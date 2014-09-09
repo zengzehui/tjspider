@@ -25,8 +25,9 @@ public class ImageController {
 	private static final Logger logger = LoggerFactory.getLogger(ImageController.class);
 
 	@RequestMapping(value = "", method = RequestMethod.GET)
-	public void getImageWithReferer(@RequestParam("url") String url, @RequestParam("referer") String referer,
+	public void getImg(@RequestParam("url") String url, @RequestParam("referer") String referer,
 			HttpServletResponse response) throws IOException {
+		logger.info("getImg STARTS " + url);
 		HttpGet httpget = new HttpGet(url);
 		httpget.setHeader("Referer", referer);
 		httpget.setHeader("User-Agent",
@@ -36,7 +37,6 @@ public class ImageController {
 		BufferedInputStream bis = null;
 		BufferedOutputStream bos = null;
 		try {
-
 			CloseableHttpResponse httpresponse = httpclient.execute(httpget);
 
 			if (httpresponse.getStatusLine().getStatusCode() == 200) {
@@ -71,6 +71,6 @@ public class ImageController {
 				bos.close();
 			httpclient.close();
 		}
-
+		logger.info("getImg ENDS " + url);
 	}
 }

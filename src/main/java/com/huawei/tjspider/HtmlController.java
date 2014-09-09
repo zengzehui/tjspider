@@ -33,35 +33,10 @@ public class HtmlController {
 
 	private static final Logger logger = LoggerFactory.getLogger(HtmlController.class);
 
-//	@RequestMapping(value = "/{charset}", method = RequestMethod.GET)
-//	public @ResponseBody String getPageUTF8(@PathVariable String charset, @RequestParam("url") String url,
-//			HttpServletResponse response) throws IOException {
-//		logger.info("***** " + url);
-//		Response jsoupResponse = Jsoup.connect(url).timeout(60 * 1000).execute();
-//		String headerCharset = jsoupResponse.charset();
-//		logger.info("headerCharset = " + headerCharset);
-//
-//		Document doc = Jsoup.parse(new URL(url).openStream(), "utf-8", url);
-//		String htmlCharset = getHtmlCharset(doc);
-//
-//		if (htmlCharset != null && !"".equalsIgnoreCase(htmlCharset)) {
-//			charset = htmlCharset;
-//		} else {
-//			if (headerCharset != null && !"".equalsIgnoreCase(headerCharset)) {
-//				charset = headerCharset;
-//			}
-//		}
-//		logger.info("***** InputStream = " + charset);
-//		doc = Jsoup.parse(new URL(url).openStream(), charset, url);
-//		response.setContentType("text/html; charset=utf-8");
-//		response.getWriter().write(doc.html());
-//		response.getWriter().close();
-//		return null;
-//	}
-
 	@RequestMapping(value = "/{charset}", method = RequestMethod.GET)
 	public @ResponseBody String getHtm(@PathVariable String charset, @RequestParam("url") String url,
 			HttpServletResponse response) throws IOException {
+		logger.info("getHtm STARTS " + url);
 		HttpGet httpget = new HttpGet(url);
 		httpget.setHeader("User-Agent",
 				"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/37.0.2062.103 Safari/537.36");
@@ -102,7 +77,7 @@ public class HtmlController {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-
+		logger.info("getHtm ENDS " + url);
 		return null;
 	}
 
