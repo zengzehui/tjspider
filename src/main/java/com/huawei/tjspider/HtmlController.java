@@ -1,13 +1,19 @@
 package com.huawei.tjspider;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.net.URL;
+import java.io.InputStream;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletResponse;
 
-import org.jsoup.Connection.Response;
+import org.apache.http.Header;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -22,34 +28,120 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 @Controller
-@RequestMapping(value = "/html")
+@RequestMapping(value = "/htm")
 public class HtmlController {
 
 	private static final Logger logger = LoggerFactory.getLogger(HtmlController.class);
 
+//	@RequestMapping(value = "/{charset}", method = RequestMethod.GET)
+//	public @ResponseBody String getPageUTF8(@PathVariable String charset, @RequestParam("url") String url,
+//			HttpServletResponse response) throws IOException {
+//		logger.info("***** " + url);
+//		Response jsoupResponse = Jsoup.connect(url).timeout(60 * 1000).execute();
+//		String headerCharset = jsoupResponse.charset();
+//		logger.info("headerCharset = " + headerCharset);
+//
+//		Document doc = Jsoup.parse(new URL(url).openStream(), "utf-8", url);
+//		String htmlCharset = getHtmlCharset(doc);
+//
+//		if (htmlCharset != null && !"".equalsIgnoreCase(htmlCharset)) {
+//			charset = htmlCharset;
+//		} else {
+//			if (headerCharset != null && !"".equalsIgnoreCase(headerCharset)) {
+//				charset = headerCharset;
+//			}
+//		}
+//		logger.info("***** InputStream = " + charset);
+//		doc = Jsoup.parse(new URL(url).openStream(), charset, url);
+//		response.setContentType("text/html; charset=utf-8");
+//		response.getWriter().write(doc.html());
+//		response.getWriter().close();
+//		return null;
+//	}
+
 	@RequestMapping(value = "/{charset}", method = RequestMethod.GET)
-	public @ResponseBody String getPageUTF8(@PathVariable String charset, @RequestParam("url") String url,
+	public @ResponseBody String getHtm(@PathVariable String charset, @RequestParam("url") String url,
 			HttpServletResponse response) throws IOException {
-		logger.info("***** " + url);
-		Response jsoupResponse = Jsoup.connect(url).timeout(60 * 1000).execute();
-		String headerCharset = jsoupResponse.charset();
-		logger.info("headerCharset = " + headerCharset);
+		HttpGet httpget = new HttpGet(url);
+		httpget.setHeader("User-Agent",
+				"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/37.0.2062.103 Safari/537.36");
+		CloseableHttpClient httpclient = HttpClients.createDefault();
+		try {
+			CloseableHttpResponse httpresponse = httpclient.execute(httpget);
+			if (httpresponse.getStatusLine().getStatusCode() == 200) {
+				response.setStatus(200);
+				response.setContentType("text/html; charset=utf-8");
+				String charsetResponse = getResponseCharset(httpresponse.getHeaders("Content-Type"));
+				InputStream isContent = httpresponse.getEntity().getContent();
 
-		Document doc = Jsoup.parse(new URL(url).openStream(), "utf-8", url);
-		String htmlCharset = getHtmlCharset(doc);
+				byte[] byteContent = InputStreamToByte(isContent);
 
-		if (htmlCharset != null && !"".equalsIgnoreCase(htmlCharset)) {
-			charset = htmlCharset;
-		} else {
-			if (headerCharset != null && !"".equalsIgnoreCase(headerCharset)) {
-				charset = headerCharset;
+				logger.info("byteContent.length = " + byteContent.length);
+
+				Document doc = Jsoup.parse(byteToInputStream(byteContent), charset, url);
+				String charsetHtml = getHtmlCharset(doc);
+
+				String finalCharset = getFinalCharset(charsetHtml, charsetResponse, charset);
+				if (charset.equalsIgnoreCase(finalCharset)) {
+					response.getWriter().write(doc.html());
+				} else {
+					doc = Jsoup.parse(byteToInputStream(byteContent), finalCharset, url);
+					response.getWriter().write(doc.html());
+				}
+				response.getWriter().close();
+				isContent.close();
+			} else {
+				logger.error(url);
+				logger.error(httpresponse.getStatusLine().toString());
+				Header[] allHeaders = httpresponse.getAllHeaders();
+				for (int i = 0; i < allHeaders.length; i++) {
+					logger.error(allHeaders[i].getName() + ": " + allHeaders[i].getValue());
+				}
+				response.setStatus(404);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return null;
+	}
+
+	private byte[] InputStreamToByte(InputStream is) throws IOException {
+		ByteArrayOutputStream baoStream = new ByteArrayOutputStream();
+		byte[] buff = new byte[100];
+		int rc = 0;
+		while ((rc = is.read(buff, 0, 100)) > 0) {
+			baoStream.write(buff, 0, rc);
+		}
+		return baoStream.toByteArray();
+	}
+
+	private InputStream byteToInputStream(byte[] b) {
+		return new ByteArrayInputStream(b);
+	}
+
+	private String getFinalCharset(String charsetHtml, String charsetResponse, String charset) {
+		String result = charset;
+		if (charsetHtml != null && !"".equalsIgnoreCase(charsetHtml)) {
+			result = charsetHtml;
+		} else if (charsetResponse != null && !"".equalsIgnoreCase(charsetResponse)) {
+			result = charsetResponse;
+		}
+		if ("gb2312".equalsIgnoreCase(result)) {
+			result = "gbk";
+		}
+		return result;
+	}
+
+	private String getResponseCharset(Header[] ContentTypeHeaders) {
+		if (ContentTypeHeaders.length > 0) {
+			String s = ContentTypeHeaders[0].getValue();
+			Pattern patternCharset = Pattern.compile("charset=([A-Za-z0-9\\-]+)");
+			Matcher matcher = patternCharset.matcher(s);
+			while (matcher.find()) {
+				return matcher.group(0).split("=")[1].toLowerCase().trim();
 			}
 		}
-		logger.info("***** InputStream = " + charset);
-		doc = Jsoup.parse(new URL(url).openStream(), charset, url);
-		response.setContentType("text/html; charset=utf-8");
-		response.getWriter().write(doc.html());
-		response.getWriter().close();
 		return null;
 	}
 
