@@ -1,3 +1,6 @@
 online modified test02.txt
 local  add a line
 local  add a line 2
+aa
+bb
+cc
