@@ -1,14 +1,6 @@
 online modified test02.txt
 local  add a line
 local  add a line 2
-aa
-bb
-cc
-
-xx
-yy
-zz
-
-aaa
-bbb
-ccc
+lan
+lan
+lan
