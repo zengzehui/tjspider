@@ -67,6 +67,7 @@ public class ImageController {
 		} catch (Exception e) {
 			logger.info(url + " getImg Exception *****");
 			e.printStackTrace();
+			response.setStatus(404);
 		} finally {
 			if (bis != null)
 				bis.close();

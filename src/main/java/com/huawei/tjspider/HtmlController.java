@@ -10,6 +10,7 @@ import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.http.Header;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -41,6 +42,9 @@ public class HtmlController {
 		httpget.setHeader("User-Agent",
 				"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/37.0.2062.103 Safari/537.36");
 		CloseableHttpClient httpclient = HttpClients.createDefault();
+		RequestConfig requestConfig = RequestConfig.custom().setSocketTimeout(30000).setConnectTimeout(60000).build();
+		httpget.setConfig(requestConfig);
+		
 		try {
 			CloseableHttpResponse httpresponse = httpclient.execute(httpget);
 			if (httpresponse.getStatusLine().getStatusCode() == 200) {
@@ -77,6 +81,7 @@ public class HtmlController {
 		} catch (Exception e) {
 			logger.info(url + " getHtm Exception *****");
 			e.printStackTrace();
+			response.setStatus(404);
 		}
 		logger.info(url + " getHtm ENDS -----");
 		return null;
