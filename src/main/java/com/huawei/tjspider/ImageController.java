@@ -7,6 +7,7 @@ import java.io.IOException;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.http.Header;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -33,6 +34,8 @@ public class ImageController {
 		httpget.setHeader("User-Agent",
 				"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/37.0.2062.103 Safari/537.36");
 		CloseableHttpClient httpclient = HttpClients.createDefault();
+		RequestConfig requestConfig = RequestConfig.custom().setSocketTimeout(30000).setConnectTimeout(30000).build();
+		httpget.setConfig(requestConfig);
 
 		BufferedInputStream bis = null;
 		BufferedOutputStream bos = null;
@@ -45,7 +48,6 @@ public class ImageController {
 				for (int i = 0; i < allHeaders.length; i++) {
 					response.setHeader(allHeaders[i].getName(), allHeaders[i].getValue());
 				}
-
 				bis = new BufferedInputStream(httpresponse.getEntity().getContent());
 				bos = new BufferedOutputStream(response.getOutputStream());
 				byte[] buff = new byte[4096];
