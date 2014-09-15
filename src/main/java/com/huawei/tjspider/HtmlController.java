@@ -36,7 +36,7 @@ public class HtmlController {
 	@RequestMapping(value = "/{charset}", method = RequestMethod.GET)
 	public @ResponseBody String getHtm(@PathVariable String charset, @RequestParam("url") String url,
 			HttpServletResponse response) throws IOException {
-		logger.info("getHtm STARTS " + url);
+		logger.info(url + " getHtm STARTS =====");
 		HttpGet httpget = new HttpGet(url);
 		httpget.setHeader("User-Agent",
 				"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/37.0.2062.103 Safari/537.36");
@@ -75,9 +75,10 @@ public class HtmlController {
 				response.setStatus(404);
 			}
 		} catch (Exception e) {
+			logger.info(url + " getHtm Exception *****");
 			e.printStackTrace();
 		}
-		logger.info("getHtm ENDS " + url);
+		logger.info(url + " getHtm ENDS -----");
 		return null;
 	}
 

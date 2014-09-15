@@ -27,7 +27,7 @@ public class ImageController {
 	@RequestMapping(value = "", method = RequestMethod.GET)
 	public void getImg(@RequestParam("url") String url, @RequestParam("referer") String referer,
 			HttpServletResponse response) throws IOException {
-		logger.info("getImg STARTS " + url);
+		logger.info(url + " getImg STARTS =====");
 		HttpGet httpget = new HttpGet(url);
 		httpget.setHeader("Referer", referer);
 		httpget.setHeader("User-Agent",
@@ -63,6 +63,7 @@ public class ImageController {
 				response.setStatus(404);
 			}
 		} catch (Exception e) {
+			logger.info(url + " getImg Exception *****");
 			e.printStackTrace();
 		} finally {
 			if (bis != null)
@@ -71,6 +72,6 @@ public class ImageController {
 				bos.close();
 			httpclient.close();
 		}
-		logger.info("getImg ENDS " + url);
+		logger.info(url + " getImg ENDS -----");
 	}
 }
