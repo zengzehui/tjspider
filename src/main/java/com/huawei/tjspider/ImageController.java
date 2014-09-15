@@ -34,7 +34,7 @@ public class ImageController {
 		httpget.setHeader("User-Agent",
 				"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/37.0.2062.103 Safari/537.36");
 		CloseableHttpClient httpclient = HttpClients.createDefault();
-		RequestConfig requestConfig = RequestConfig.custom().setSocketTimeout(30000).setConnectTimeout(30000).build();
+		RequestConfig requestConfig = RequestConfig.custom().setSocketTimeout(30000).setConnectTimeout(60000).build();
 		httpget.setConfig(requestConfig);
 
 		BufferedInputStream bis = null;
