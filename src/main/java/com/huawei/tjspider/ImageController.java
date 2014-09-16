@@ -34,7 +34,24 @@ public class ImageController {
 		httpget.setHeader("User-Agent",
 				"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/37.0.2062.103 Safari/537.36");
 		CloseableHttpClient httpclient = HttpClients.createDefault();
-		RequestConfig requestConfig = RequestConfig.custom().setSocketTimeout(30000).setConnectTimeout(60000).build();
+		/*
+		 * The Connection Timeout (http.connection.timeout) – the time to
+		 * establish the connection with the remote host
+		 * 
+		 * The Socket Timeout (http.socket.timeout) – the time waiting for data
+		 * – after the connection was established; maximum time of inactivity
+		 * between two data packets
+		 * 
+		 * The Connection Manager Timeout (http.connection-manager.timeout) –
+		 * the time to wait for a connection from the connection manager/pool
+		 * 
+		 * The first two parameters – the connection and socket timeouts – are
+		 * the most important, but setting a timeout for obtaining a connection
+		 * is definitly important in high load scenarios, which is why the third
+		 * parameter shouldn’t be ignored.
+		 */
+		RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout(30 * 1000).setSocketTimeout(90 * 1000)
+				.setConnectionRequestTimeout(10 * 1000).build();
 		httpget.setConfig(requestConfig);
 
 		BufferedInputStream bis = null;
