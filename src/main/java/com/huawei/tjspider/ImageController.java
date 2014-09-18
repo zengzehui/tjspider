@@ -2,7 +2,11 @@ package com.huawei.tjspider;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.URLEncoder;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -12,6 +16,9 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
@@ -25,8 +32,8 @@ public class ImageController {
 
 	private static final Logger logger = LoggerFactory.getLogger(ImageController.class);
 
-	@RequestMapping(value = "", method = RequestMethod.GET)
-	public void getImg(@RequestParam("url") String url, @RequestParam("referer") String referer,
+	@RequestMapping(value = "/0917", method = RequestMethod.GET)
+	public void getImg0917(@RequestParam("url") String url, @RequestParam("referer") String referer,
 			HttpServletResponse response) throws IOException {
 		logger.info(url + " getImg STARTS =====");
 		HttpGet httpget = new HttpGet(url);
@@ -95,8 +102,8 @@ public class ImageController {
 		logger.info(url + " getImg ENDS -----");
 	}
 
-	@RequestMapping(value = "/test", method = RequestMethod.GET)
-	public void getImgTest(@RequestParam("url") String url, @RequestParam("referer") String referer,
+	@RequestMapping(value = "", method = RequestMethod.GET)
+	public void getImg(@RequestParam("url") String url, @RequestParam("referer") String referer,
 			HttpServletResponse response) throws IOException {
 		logger.info(url + " getImg STARTS =====");
 		HttpGet httpget = new HttpGet(url);
@@ -108,40 +115,68 @@ public class ImageController {
 				.setConnectionRequestTimeout(10 * 1000).build();
 		httpget.setConfig(requestConfig);
 
-		BufferedOutputStream bos = null;
-		try {
-			CloseableHttpResponse httpresponse = httpclient.execute(httpget);
+		BufferedInputStream bisFile = null;
+		BufferedOutputStream bosFile = null;
+		BufferedOutputStream bosResponse = null;
+		DateTime now = new DateTime();
+		DateTimeFormatter dtDtf = DateTimeFormat.forPattern("yyyy-MM-dd");
 
-			if (httpresponse.getStatusLine().getStatusCode() == 200) {
-				Header[] allHeaders = httpresponse.getAllHeaders();
+		File imgFile = new File(Thread.currentThread().getContextClassLoader().getResource("").getPath() + "/image/"
+				+ dtDtf.print(now) + "/" + URLEncoder.encode(url, "UTF-8"));
+		File imgFolder = imgFile.getParentFile();
+		if (!imgFolder.exists()) {
+			imgFolder.mkdirs();
+		}
+		try {
+			CloseableHttpResponse srcResponse = httpclient.execute(httpget);
+			if (srcResponse.getStatusLine().getStatusCode() == 200) {
+				bosFile = new BufferedOutputStream(new FileOutputStream(imgFile));
+				srcResponse.getEntity().writeTo(bosFile);
+				bosFile.close();
+				logger.info(url + " getImg write to " + imgFile.getAbsolutePath());
+				response.setStatus(200);
+				Header[] allHeaders = srcResponse.getAllHeaders();
 				for (int i = 0; i < allHeaders.length; i++) {
 					response.setHeader(allHeaders[i].getName(), allHeaders[i].getValue());
 				}
-				bos = new BufferedOutputStream(response.getOutputStream());
-				httpresponse.getEntity().writeTo(bos);
-				response.setStatus(200);
+				bisFile = new BufferedInputStream(new FileInputStream(imgFile));
+				bosResponse = new BufferedOutputStream(response.getOutputStream());
+				byte[] buff = new byte[4096];
+				int bytesRead;
+				while (-1 != (bytesRead = bisFile.read(buff, 0, buff.length))) {
+					bosResponse.write(buff, 0, bytesRead);
+				}
+				response.flushBuffer();
 			} else {
-				logger.error(url);
-				logger.error(httpresponse.getStatusLine().toString());
-				Header[] allHeaders = httpresponse.getAllHeaders();
+				logger.info(url + " getImg Source Response is " + srcResponse.getStatusLine().toString());
+				response.sendError(404);
+				Header[] allHeaders = srcResponse.getAllHeaders();
 				for (int i = 0; i < allHeaders.length; i++) {
 					logger.error(allHeaders[i].getName() + ": " + allHeaders[i].getValue());
 				}
-				logger.info(url + " getImg Source Response is not 200");
-				response.setStatus(404);
 			}
 		} catch (Exception e) {
-			response.reset();
-			response.setStatus(404);
 			logger.info(url + " getImg Exception *****");
 			e.printStackTrace();
-			
+			if (imgFile.exists()) {
+				imgFile.delete();
+				logger.info(url + " getImg Deleted *****");
+			}
+			response.sendError(404);
 		} finally {
-			if (bos != null) {
-				bos.close();
+			if (bisFile != null) {
+				bisFile.close();
+			}
+			if (bosFile != null) {
+				bosFile.close();
+			}
+			if (bosResponse != null) {
+				bosResponse.close();
 			}
 			httpclient.close();
 		}
+
 		logger.info(url + " getImg ENDS -----");
 	}
+
 }
