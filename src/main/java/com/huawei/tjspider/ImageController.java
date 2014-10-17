@@ -10,7 +10,6 @@ import java.net.URLEncoder;
 
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.http.Header;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -38,6 +37,7 @@ public class ImageController {
 		logger.info("");
 		String shortUrl = url.substring(url.lastIndexOf("/"));
 		logger.info(shortUrl + " STARTS ===== " + url);
+		logger.info(shortUrl + " referer: " + referer);
 
 		DateTime now = new DateTime();
 		DateTimeFormatter dtDtf = DateTimeFormat.forPattern("yyyy-MM-dd");
