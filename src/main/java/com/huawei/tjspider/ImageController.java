@@ -226,7 +226,7 @@ public class ImageController {
 				srcResponse.close();
 				httpclient.close();
 			} catch (Exception e) {
-				logger.info(shortUrl + " Exception: Failed to get image or write image to file.");
+				logger.info(shortUrl + " Exception: Failed to get image or save image.");
 				e.printStackTrace();
 				if (imgFile.exists()) {
 					imgFile.delete();
@@ -241,11 +241,12 @@ public class ImageController {
 				if (httpclient != null) {
 					httpclient.close();
 				}
-				logger.info(shortUrl + " Finally: getting and writing image to file.");
+				logger.info(shortUrl + " Finally: getting and saving image.");
 			}
 		} else {
 			logger.info(shortUrl + " Skip getting image.");
 		}
+		
 		if (!imgFile.exists()) {
 			response.sendError(404, "Original response IS 200, but FAILED to write image to file.");
 			logger.info(shortUrl + " Response 404: Original response is not 200.");
@@ -270,9 +271,15 @@ public class ImageController {
 				logger.info(shortUrl + " Exception: FAILED to serve image to client.");
 				e.printStackTrace();
 			} finally {
-				logger.info(shortUrl + " Finally: serving image to client.");
+				if (bosResponse != null) {
+					bosResponse.close();
+				}
+				if (bisFile != null) {
+					bisFile.close();
+				}
+				logger.info(shortUrl + " Finally: serving image.");
 			}
-			logger.info(shortUrl + " ENDS =======");
 		}
+		logger.info(shortUrl + " ENDS =======");
 	}
 }
