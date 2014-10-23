@@ -1,7 +1,5 @@
 package com.huawei.tjspider;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.regex.Matcher;
@@ -9,6 +7,7 @@ import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -28,94 +27,73 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+
 @Controller
 @RequestMapping(value = "/htm")
 public class HtmlController {
 
 	private static final Logger logger = LoggerFactory.getLogger(HtmlController.class);
 
-	@RequestMapping(value = "/{charset}", method = RequestMethod.GET)
+	@RequestMapping(value = "/{charset}", method = RequestMethod.GET, produces = "text/html; charset=UTF-8")
 	public @ResponseBody String getHtm(@PathVariable String charset, @RequestParam("url") String url,
 			HttpServletResponse response) throws IOException {
-		logger.info(url + " getHtm STARTS =====");
+		logger.info(url + " STARTS ===== " + url);
+
 		HttpGet httpget = new HttpGet(url);
 		httpget.setHeader("User-Agent",
 				"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/37.0.2062.103 Safari/537.36");
 		CloseableHttpClient httpclient = HttpClients.createDefault();
-		/*
-		 * The Connection Timeout (http.connection.timeout) – the time to
-		 * establish the connection with the remote host
-		 * 
-		 * The Socket Timeout (http.socket.timeout) – the time waiting for data
-		 * – after the connection was established; maximum time of inactivity
-		 * between two data packets
-		 * 
-		 * The Connection Manager Timeout (http.connection-manager.timeout) –
-		 * the time to wait for a connection from the connection manager/pool
-		 * 
-		 * The first two parameters – the connection and socket timeouts – are
-		 * the most important, but setting a timeout for obtaining a connection
-		 * is definitly important in high load scenarios, which is why the third
-		 * parameter shouldn’t be ignored.
-		 */
 		RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout(30 * 1000).setSocketTimeout(90 * 1000)
 				.setConnectionRequestTimeout(10 * 1000).build();
 		httpget.setConfig(requestConfig);
-
+		CloseableHttpResponse srcResponse = null;
+		InputStream isContent = null;
 		try {
-			CloseableHttpResponse httpresponse = httpclient.execute(httpget);
-			if (httpresponse.getStatusLine().getStatusCode() == 200) {
-				response.setStatus(200);
-				response.setContentType("text/html; charset=utf-8");
-				String charsetResponse = getResponseCharset(httpresponse.getHeaders("Content-Type"));
-				InputStream isContent = httpresponse.getEntity().getContent();
-
-				byte[] byteContent = InputStreamToByte(isContent);
-
-				logger.info("byteContent.length = " + byteContent.length);
-
-				Document doc = Jsoup.parse(byteToInputStream(byteContent), charset, url);
-				String charsetHtml = getHtmlCharset(doc);
-
-				String finalCharset = getFinalCharset(charsetHtml, charsetResponse, charset);
-				if (charset.equalsIgnoreCase(finalCharset)) {
-					response.getWriter().write(doc.html());
-				} else {
-					doc = Jsoup.parse(byteToInputStream(byteContent), finalCharset, url);
-					response.getWriter().write(doc.html());
-				}
-				response.getWriter().close();
+			srcResponse = httpclient.execute(httpget);
+			if (srcResponse.getStatusLine().getStatusCode() == 200) {
+				
+				isContent = srcResponse.getEntity().getContent();
+				byte[] byteContent = IOUtils.toByteArray(isContent);
 				isContent.close();
-			} else {
-				logger.error(url);
-				logger.error(httpresponse.getStatusLine().toString());
-				Header[] allHeaders = httpresponse.getAllHeaders();
-				for (int i = 0; i < allHeaders.length; i++) {
-					logger.error(allHeaders[i].getName() + ": " + allHeaders[i].getValue());
+				logger.info(url + " byteContent.length = " + byteContent.length);
+				Document doc = Jsoup.parse(new String(byteContent, charset), url);
+				
+				String charsetHtml = getHtmlCharset(doc);
+				String charsetResponse = getResponseCharset(srcResponse.getHeaders("Content-Type"));
+				logger.info(url + " html:" + charsetHtml + ", " + "response:" + charsetResponse + ", " + "given:"
+						+ charset);
+				String finalCharset = getFinalCharset(charsetHtml, charsetResponse, charset);
+				logger.info(url + " final:" + finalCharset);
+				if (charset.equalsIgnoreCase(finalCharset)) {
+					return doc.html();
+				} else {
+					doc = Jsoup.parse(new String(byteContent, finalCharset), url);
+					return doc.html();
 				}
-				response.setStatus(404);
+			} else {
+				response.sendError(404, "Original response IS NOT 200.");
+				logger.warn(url + " Response 404: Original response: " + srcResponse.getStatusLine().toString());
+				return null;
 			}
 		} catch (Exception e) {
-			logger.info(url + " getHtm Exception *****");
+			response.sendError(404, "Original response IS 200, but FAILED to PARSE or SERVE the html.");
+			logger.error(url + " Response 404: Original response IS 200, but FAILED to PARSE or SERVE the html.");
+			logger.error(url + " " + e.getMessage());
 			e.printStackTrace();
-			response.setStatus(404);
+		} finally {
+			if (isContent != null) {
+				isContent.close();
+			}
+			if (srcResponse != null) {
+				srcResponse.close();
+			}
+			if (httpclient != null) {
+				httpclient.close();
+			}
+			logger.info(url + " Finally: getting and serving html.");
 		}
-		logger.info(url + " getHtm ENDS -----");
+		logger.info(url + " ENDS =======");
 		return null;
-	}
-
-	private byte[] InputStreamToByte(InputStream is) throws IOException {
-		ByteArrayOutputStream baoStream = new ByteArrayOutputStream();
-		byte[] buff = new byte[100];
-		int rc = 0;
-		while ((rc = is.read(buff, 0, 100)) > 0) {
-			baoStream.write(buff, 0, rc);
-		}
-		return baoStream.toByteArray();
-	}
-
-	private InputStream byteToInputStream(byte[] b) {
-		return new ByteArrayInputStream(b);
 	}
 
 	private String getFinalCharset(String charsetHtml, String charsetResponse, String charset) {
@@ -170,15 +148,6 @@ public class HtmlController {
 				}
 			}
 		}
-		if (result == null) {
-			logger.error("html charset is null");
-		} else if ("gb2312".equalsIgnoreCase(result)) {
-			logger.info("html charset is " + result);
-			result = "gbk";
-		} else {
-			logger.info("html charset is " + result);
-		}
-		logger.info("html charset finally is " + result);
 		return result;
 	}
 }

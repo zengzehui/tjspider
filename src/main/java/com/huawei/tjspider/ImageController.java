@@ -34,7 +34,6 @@ public class ImageController {
 	@RequestMapping(value = "", method = RequestMethod.GET)
 	public void getImg(@RequestParam("url") String url, @RequestParam("referer") String referer,
 			HttpServletResponse response) throws IOException {
-		logger.info("");
 		String shortUrl = url.substring(url.lastIndexOf("/"));
 		logger.info(shortUrl + " STARTS ===== " + url);
 		logger.info(shortUrl + " referer: " + referer);
@@ -73,13 +72,12 @@ public class ImageController {
 					logger.info(shortUrl + " Writed to " + imgFile.getAbsolutePath() + " size=" + imgFile.length());
 				} else {
 					response.sendError(404, "Original response IS NOT 200.");
-					logger.info(shortUrl + " Response 404: Original response is not 200.");
+					logger.warn(shortUrl + " Response 404: Original response: " + srcResponse.getStatusLine().toString());
 					return;
 				}
-				srcResponse.close();
-				httpclient.close();
 			} catch (Exception e) {
-				logger.info(shortUrl + " Exception: Failed to get image or save image.");
+				logger.error(shortUrl + " Failed to get image or save image.");
+				logger.error(shortUrl + " " + e.getMessage());
 				e.printStackTrace();
 				if (imgFile.exists()) {
 					imgFile.delete();
@@ -102,7 +100,7 @@ public class ImageController {
 		
 		if (!imgFile.exists()) {
 			response.sendError(404, "Original response IS 200, but FAILED to write image to file.");
-			logger.info(shortUrl + " Response 404: Original response is not 200.");
+			logger.warn(shortUrl + " Response 404: Original response IS 200, but FAILED to write image to file.");
 			return;
 		} else {
 			logger.info(shortUrl + " Start serving image.");
@@ -121,7 +119,8 @@ public class ImageController {
 				response.flushBuffer();
 				bisFile.close();
 			} catch (Exception e) {
-				logger.info(shortUrl + " Exception: FAILED to serve image to client.");
+				logger.error(shortUrl + " FAILED to serve image to client.");
+				logger.error(shortUrl + " " + e.getMessage());
 				e.printStackTrace();
 			} finally {
 				if (bosResponse != null) {
