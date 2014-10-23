@@ -27,7 +27,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-
 @Controller
 @RequestMapping(value = "/htm")
 public class HtmlController {
@@ -37,7 +36,7 @@ public class HtmlController {
 	@RequestMapping(value = "/{charset}", method = RequestMethod.GET, produces = "text/html; charset=UTF-8")
 	public @ResponseBody String getHtm(@PathVariable String charset, @RequestParam("url") String url,
 			HttpServletResponse response) throws IOException {
-		logger.info(url + " STARTS ===== " + url);
+		logger.info(url + " ===== STARTS " + url);
 
 		HttpGet httpget = new HttpGet(url);
 		httpget.setHeader("User-Agent",
@@ -51,19 +50,19 @@ public class HtmlController {
 		try {
 			srcResponse = httpclient.execute(httpget);
 			if (srcResponse.getStatusLine().getStatusCode() == 200) {
-				
+
 				isContent = srcResponse.getEntity().getContent();
 				byte[] byteContent = IOUtils.toByteArray(isContent);
 				isContent.close();
-				logger.info(url + " byteContent.length = " + byteContent.length);
+				logger.info(url + " Length: " + byteContent.length);
 				Document doc = Jsoup.parse(new String(byteContent, charset), url);
-				
+
 				String charsetHtml = getHtmlCharset(doc);
 				String charsetResponse = getResponseCharset(srcResponse.getHeaders("Content-Type"));
-				logger.info(url + " html:" + charsetHtml + ", " + "response:" + charsetResponse + ", " + "given:"
-						+ charset);
+
 				String finalCharset = getFinalCharset(charsetHtml, charsetResponse, charset);
-				logger.info(url + " final:" + finalCharset);
+				logger.info(url + " Charset: html:" + charsetHtml + "," + "response:" + charsetResponse + ","
+						+ "given:" + charset + "," + "final:" + finalCharset);
 				if (charset.equalsIgnoreCase(finalCharset)) {
 					return doc.html();
 				} else {
@@ -80,6 +79,7 @@ public class HtmlController {
 			logger.error(url + " Response 404: Original response IS 200, but FAILED to PARSE or SERVE the html.");
 			logger.error(url + " " + e.getMessage());
 			e.printStackTrace();
+			return null;
 		} finally {
 			if (isContent != null) {
 				isContent.close();
@@ -90,10 +90,8 @@ public class HtmlController {
 			if (httpclient != null) {
 				httpclient.close();
 			}
-			logger.info(url + " Finally: getting and serving html.");
+			logger.info(url + " Finally: get and serve html.");
 		}
-		logger.info(url + " ENDS =======");
-		return null;
 	}
 
 	private String getFinalCharset(String charsetHtml, String charsetResponse, String charset) {

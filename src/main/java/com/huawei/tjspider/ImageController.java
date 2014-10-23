@@ -1,6 +1,5 @@
 package com.huawei.tjspider;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -10,6 +9,7 @@ import java.net.URLEncoder;
 
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -24,6 +24,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 @Controller
 @RequestMapping(value = "/img")
@@ -31,12 +32,12 @@ public class ImageController {
 
 	private static final Logger logger = LoggerFactory.getLogger(ImageController.class);
 
-	@RequestMapping(value = "", method = RequestMethod.GET)
-	public void getImg(@RequestParam("url") String url, @RequestParam("referer") String referer,
+	@RequestMapping(value = "", method = RequestMethod.GET, produces = "image/gif")
+	public @ResponseBody byte[] getImg(@RequestParam("url") String url, @RequestParam("referer") String referer,
 			HttpServletResponse response) throws IOException {
 		String shortUrl = url.substring(url.lastIndexOf("/"));
-		logger.info(shortUrl + " STARTS ===== " + url);
-		logger.info(shortUrl + " referer: " + referer);
+		logger.info(shortUrl + " ===== STARTS " + url);
+		logger.info(shortUrl + " Referer: " + referer);
 
 		DateTime now = new DateTime();
 		DateTimeFormatter dtDtf = DateTimeFormat.forPattern("yyyy-MM-dd");
@@ -48,7 +49,6 @@ public class ImageController {
 			imgFolder.mkdirs();
 		}
 		if (!imgFile.exists()) {
-			logger.info(shortUrl + " Start getting image.");
 			CloseableHttpResponse srcResponse = null;
 			BufferedOutputStream bosFile = null;
 			CloseableHttpClient httpclient = null;
@@ -57,31 +57,29 @@ public class ImageController {
 				httpget.setHeader("Referer", referer);
 				httpget.setHeader("User-Agent",
 						"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/37.0.2062.103 Safari/537.36");
-
 				httpget.setConfig(RequestConfig.custom().setConnectTimeout(30 * 1000).setSocketTimeout(90 * 1000)
 						.setConnectionRequestTimeout(10 * 1000).build());
-
 				httpclient = HttpClients.createDefault();
 				srcResponse = httpclient.execute(httpget);
 				if (srcResponse.getStatusLine().getStatusCode() == 200) {
 					bosFile = new BufferedOutputStream(new FileOutputStream(imgFile));
 					srcResponse.getEntity().writeTo(bosFile);
-					bosFile.close();
-					srcResponse.close();
-					httpclient.close();
 					logger.info(shortUrl + " Writed to " + imgFile.getAbsolutePath() + " size=" + imgFile.length());
 				} else {
 					response.sendError(404, "Original response IS NOT 200.");
-					logger.warn(shortUrl + " Response 404: Original response: " + srcResponse.getStatusLine().toString());
-					return;
+					logger.warn(shortUrl + " Response 404: Original response: "
+							+ srcResponse.getStatusLine().toString());
+					return null;
 				}
 			} catch (Exception e) {
-				logger.error(shortUrl + " Failed to get image or save image.");
+				response.sendError(404, " Response 404: Failed to get or write image.");
+				logger.error(shortUrl + " Response 404: Failed to get or write image.");
 				logger.error(shortUrl + " " + e.getMessage());
 				e.printStackTrace();
 				if (imgFile.exists()) {
 					imgFile.delete();
 				}
+				return null;
 			} finally {
 				if (bosFile != null) {
 					bosFile.close();
@@ -92,46 +90,32 @@ public class ImageController {
 				if (httpclient != null) {
 					httpclient.close();
 				}
-				logger.info(shortUrl + " Finally: getting and saving image.");
+				logger.info(shortUrl + " Finally: get and write image.");
 			}
 		} else {
-			logger.info(shortUrl + " Skip getting image.");
+			logger.info(shortUrl + " Image exists.");
 		}
-		
+
 		if (!imgFile.exists()) {
 			response.sendError(404, "Original response IS 200, but FAILED to write image to file.");
 			logger.warn(shortUrl + " Response 404: Original response IS 200, but FAILED to write image to file.");
-			return;
+			return null;
 		} else {
-			logger.info(shortUrl + " Start serving image.");
-			BufferedInputStream bisFile = null;
-			BufferedOutputStream bosResponse = null;
+			FileInputStream fis = null;
 			try {
-				bisFile = new BufferedInputStream(new FileInputStream(imgFile));
-				response.setContentLength((int) imgFile.length());
-				bosResponse = new BufferedOutputStream(response.getOutputStream());
-				byte[] buff = new byte[4096];
-				int bytesRead;
-				while (-1 != (bytesRead = bisFile.read(buff, 0, buff.length))) {
-					bosResponse.write(buff, 0, bytesRead);
-				}
-				bosResponse.close();
-				response.flushBuffer();
-				bisFile.close();
+				fis = new FileInputStream(imgFile);
+				return IOUtils.toByteArray(fis);
 			} catch (Exception e) {
 				logger.error(shortUrl + " FAILED to serve image to client.");
 				logger.error(shortUrl + " " + e.getMessage());
 				e.printStackTrace();
+				return null;
 			} finally {
-				if (bosResponse != null) {
-					bosResponse.close();
+				if (fis != null) {
+					fis.close();
 				}
-				if (bisFile != null) {
-					bisFile.close();
-				}
-				logger.info(shortUrl + " Finally: serving image.");
+				logger.info(shortUrl + " Finally: serve image.");
 			}
 		}
-		logger.info(shortUrl + " ENDS =======");
 	}
 }
