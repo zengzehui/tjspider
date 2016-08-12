@@ -35,7 +35,7 @@ public class HtmlController {
 
 	private static final Logger logger = LoggerFactory.getLogger(HtmlController.class);
 	
-	@RequestMapping(value = "/getHtml",method = RequestMethod.GET, produces = "text/html; charset=UTF-8")
+	@RequestMapping(value = "/",method = RequestMethod.GET, produces = "text/html; charset=UTF-8")
 	public @ResponseBody String getHtmlContent(@RequestParam("url") String url,HttpServletResponse response)  {
 		logger.info("getHtml url link:"+url);
 		Connection conn = Jsoup.connect(url).timeout(30*1000);
