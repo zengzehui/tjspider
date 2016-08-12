@@ -44,7 +44,7 @@ public class HtmlControllerTest {
 			return doc.html();
 		} catch (IOException e) {
 			try {
-				response.sendError(404, "Original response IS 200, but FAILED to PARSE or SERVE the html.");
+				response.sendError(404, "===Original response IS 200, but FAILED to PARSE or SERVE the html.");
 			} catch (IOException e1) {
 				logger.error(e1.getMessage());
 			}
