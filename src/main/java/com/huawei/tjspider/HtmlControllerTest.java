@@ -2,6 +2,7 @@ package com.huawei.tjspider;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -14,6 +15,7 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -33,10 +35,11 @@ public class HtmlControllerTest {
 
 	private static final Logger logger = LoggerFactory.getLogger(HtmlControllerTest.class);
 	
-	
 	@RequestMapping(value = "/getHtml",method = RequestMethod.GET, produces = "text/html; charset=UTF-8")
 	public @ResponseBody String getHtmlCont(@RequestParam("url") String url,HttpServletResponse response)  {
-		logger.info(url + " ===== get HTML ---url: " + url);
+		System.setProperty("http.proxyHost", "10.57.191.125");
+		System.setProperty("http.proxyPort", "3128");
+		logger.info("getHtml url link:"+url);
 		Connection conn = Jsoup.connect(url).timeout(30*1000);
 		conn.header("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.106 Safari/537.36");
 		Document doc = null;
@@ -46,7 +49,7 @@ public class HtmlControllerTest {
 			return doc.html();
 		} catch (IOException e) {
 			try {
-				response.sendError(404, "===Original response IS 200, but FAILED to PARSE or SERVE the html.");
+				response.sendError(404, "Original response IS 200, but FAILED to PARSE or SERVE the html.");
 			} catch (IOException e1) {
 				logger.error(e1.getMessage());
 			}
