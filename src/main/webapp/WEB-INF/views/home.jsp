@@ -12,6 +12,6 @@
 
 <P>  The time on the server is ${serverTime}. </P>
 <P>  chinese 哈哈中文 </P>
-<P>  1145 </P>
+<P>  1000 </P>
 </body>
 </html>
