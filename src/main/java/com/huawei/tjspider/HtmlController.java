@@ -26,12 +26,35 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.jsoup.Connection;
+import java.nio.charset.Charset;
 
 @Controller
 @RequestMapping(value = "/htm")
 public class HtmlController {
 
 	private static final Logger logger = LoggerFactory.getLogger(HtmlController.class);
+	
+	@RequestMapping(value = "/getHtml",method = RequestMethod.GET, produces = "text/html; charset=UTF-8")
+	public @ResponseBody String getHtmlContent(@RequestParam("url") String url,HttpServletResponse response)  {
+		logger.info("getHtml url link:"+url);
+		Connection conn = Jsoup.connect(url).timeout(30*1000);
+		conn.header("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.106 Safari/537.36");
+		Document doc = null;
+		try {
+			doc = conn.get();
+			doc.charset(Charset.forName("UTF-8"));
+			return doc.html();
+		} catch (IOException e) {
+			try {
+				response.sendError(404, "Original response IS 200, but FAILED to PARSE or SERVE the html.");
+			} catch (IOException e1) {
+				logger.error(e1.getMessage());
+			}
+			logger.error(e.getMessage());
+		}
+		return null;
+	}
 
 	@RequestMapping(value = "/{charset}", method = RequestMethod.GET, produces = "text/html; charset=UTF-8")
 	public @ResponseBody String getHtm(@PathVariable String charset, @RequestParam("url") String url,
