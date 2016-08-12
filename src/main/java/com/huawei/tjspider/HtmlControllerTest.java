@@ -32,6 +32,27 @@ import org.springframework.web.bind.annotation.ResponseBody;
 public class HtmlControllerTest {
 
 	private static final Logger logger = LoggerFactory.getLogger(HtmlControllerTest.class);
+	
+	
+	@RequestMapping(value = "/getHtml",method = RequestMethod.GET, produces = "text/html; charset=UTF-8")
+	public @ResponseBody String getHtmlCont(@RequestParam("url") String url,HttpServletResponse response)  {
+		Connection conn = Jsoup.connect(url).timeout(0);
+		conn.header("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.106 Safari/537.36");
+		Document doc;
+		try {
+			doc = conn.get();
+			doc.charset(Charset.forName("UTF-8"));
+			return doc.html();
+		} catch (IOException e) {
+			try {
+				response.sendError(404, "Original response IS 200, but FAILED to PARSE or SERVE the html.");
+			} catch (IOException e1) {
+				logger.error(e1.getMessage());
+			}
+			logger.error(e.getMessage());
+		}
+		return null;
+	}
 
 	@RequestMapping(value = "/{charset}", method = RequestMethod.GET, produces = "text/html; charset=UTF-8")
 	public @ResponseBody String getHtm(@PathVariable String charset, @RequestParam("url") String url,
