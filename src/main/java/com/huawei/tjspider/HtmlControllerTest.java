@@ -37,8 +37,7 @@ public class HtmlControllerTest {
 	
 	@RequestMapping(value = "/getHtml",method = RequestMethod.GET, produces = "text/html; charset=UTF-8")
 	public @ResponseBody String getHtmlCont(@RequestParam("url") String url,HttpServletResponse response)  {
-		System.setProperty("http.proxyHost", "10.57.191.125");
-		System.setProperty("http.proxyPort", "3128");
+		
 		logger.info("getHtml url link:"+url);
 		Connection conn = Jsoup.connect(url).timeout(30*1000);
 		conn.header("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.106 Safari/537.36");
