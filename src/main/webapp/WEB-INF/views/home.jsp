@@ -12,6 +12,6 @@
 
 <P>  The time on the server is ${serverTime}. </P>
 <P>  chinese 哈哈中文 </P>
-<P>  1000 </P>
+<P>  最后更新：2016-11-08 11:31:00 </P>
 </body>
 </html>
